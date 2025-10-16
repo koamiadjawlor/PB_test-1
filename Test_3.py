@@ -15,45 +15,67 @@ ADS1015_ADDR = 0x48
 
 def read_h8_voltage():
     """Lit la tension sur H8 (canal AIN2)"""
-    config = 0xE283  # AIN2, ± 4.096V
-    i2c.writeto_mem(ADS1015_ADDR, 0x01, config.to_bytes(2, 'big'))
-    time.sleep_ms(10)
-    
-    data = i2c.readfrom_mem(ADS1015_ADDR, 0x00, 2)
-    raw = int.from_bytes(data, 'big') >> 4
-    if raw > 2047:
-        raw -= 4096
-    
-    return raw * 4.096 / 2048
+    try:
+        config = 0xE283  # AIN2, ± 4.096V
+        i2c.writeto_mem(ADS1015_ADDR, 0x01, config.to_bytes(2, 'big'))
+        time.sleep_ms(10)
+        
+        data = i2c.readfrom_mem(ADS1015_ADDR, 0x00, 2)
+        raw = int.from_bytes(data, 'big') >> 4
+        if raw > 2047:
+            raw -= 4096
+        
+        return raw * 4.096 / 2048
+    except:
+        print("Erreur lecture ADC")
+        return 0
 
 def set_pwm_duty(duty_cycle):
     """Définit le rapport cyclique PWM (0-100%)"""
     duty = int(duty_cycle * 65535 / 100)
     pwm_out.duty_u16(duty)
-    # Envoi de la valeur théorique par UART
-    uart.write(f"{duty_cycle:.1f}\n")
+    # Envoi avec un format spécifique
+    message = f"D{int(duty_cycle)}\n"
+    uart.write(message)
 
 def calculate_real_duty(voltage):
     """Calcule le rapport cyclique réel à partir de la tension"""
-    return (voltage / 3.3) * 100
+    return max(0, min(100, (voltage / 3.3) * 100))
 
 def read_uart_duty():
-    """Lit et parse la valeur du duty cycle depuis l'UART de manière sécurisée"""
+    """Lit et parse la valeur du duty cycle depuis l'UART"""
     if uart.any():
         try:
-            data = uart.readline()
+            # Lire toutes les données disponibles
+            data = uart.read(uart.any())
             if data:
-                received_str = data.decode().strip()
-                return float(received_str)
-        except (ValueError, UnicodeError):
-            print("Erreur de lecture UART")
+                # Convertir en string et nettoyer
+                text = data.decode('utf-8').strip()
+                # Chercher un pattern spécifique
+                if text.startswith('D'):
+                    # Extraire la valeur après 'D'
+                    value_str = text[1:].strip()
+                    return float(value_str)
+                else:
+                    # Essayer de convertir directement
+                    return float(text)
+        except Exception as e:
+            print(f"Erreur UART: {e}")
+            # Vider le buffer en cas d'erreur
+            if uart.any():
+                uart.read(uart.any())
     return None
 
 def main():
     duty_cycle = 0
     direction = 1
+    last_print = time.time()
+    
+    print("Pico1 démarré - En attente de données...")
     
     while True:
+        current_time = time.time()
+        
         # Mode émetteur : génération PWM
         set_pwm_duty(duty_cycle)
         
@@ -64,14 +86,26 @@ def main():
             real_duty = calculate_real_duty(measured_voltage)
             error = real_duty - received_duty
             
-            print(f"Pico1 - Théorique: {received_duty:.1f}%, Mesuré: {real_duty:.1f}%, Erreur: {error:.2f}%")
+            print(f"Pico1 - Théorique: {received_duty:.1f}%, Mesuré: {real_duty:.1f}%, Erreur: {error:.2f}%, Tension: {measured_voltage:.2f}V")
+            last_print = current_time
+        
+        # Affichage périodique de l'état
+        if current_time - last_print > 2:
+            measured_voltage = read_h8_voltage()
+            real_duty = calculate_real_duty(measured_voltage)
+            print(f"Pico1 - Emission: {duty_cycle}%, Tension mesurée: {measured_voltage:.2f}V ({real_duty:.1f}%)")
+            last_print = current_time
         
         # Variation du duty cycle pour les tests
         duty_cycle += direction
-        if duty_cycle >= 100 or duty_cycle <= 0:
-            direction *= -1
+        if duty_cycle >= 100:
+            duty_cycle = 100
+            direction = -1
+        elif duty_cycle <= 0:
+            duty_cycle = 0
+            direction = 1
         
-        time.sleep(0.1)
+        time.sleep(0.2)
 
 if __name__ == "__main__":
     main()
