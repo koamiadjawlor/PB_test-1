@@ -6,7 +6,7 @@ pwm_out = PWM(Pin(16))
 pwm_out.freq(1000)
 
 # Configuration UART
-uart = UART(0, baudrate=115200, tx=Pin(5), rx=Pin(4))
+uart = UART(1, baudrate=115200, tx=Pin(8), rx=Pin(9))
 
 # Configuration I2C pour ADS1015
 i2c = I2C(1, scl=Pin(15), sda=Pin(14), freq=100000)
@@ -40,7 +40,7 @@ def read_uart_theoretical():
     """Lit la valeur théorique envoyée par Pico 1"""
     if uart.any():
         try:
-            data = uart.readline().decode().strip()
+            data = uart.readline().decode().strip() #type:ignore
             if data.startswith("TH:"):
                 return float(data[3:])
         except:
@@ -80,7 +80,7 @@ def main():
             send_measurement(theoretical_duty, measured_duty, error)
             
             # 6. Affichage local
-            print(f"Théorique: {theoretical_duty:5.1f}% | Mesuré: {measured_duty:5.1f}% | Erreur: {error:+.1f}% | Tension: {voltage:.2f}V")
+            print(f"ThEorique: {theoretical_duty:5.1f}% | MesurE: {measured_duty:5.1f}% | Erreur: {error:+.1f}% | Tension: {voltage:.2f}V")
         
         # Mode bidirectionnel : Pico 2 génère aussi un PWM
         current_time = time.time()
@@ -94,7 +94,7 @@ def main():
             bidir_index = (bidir_index + 1) % len(bidir_sequence)
             last_bidir_change = current_time
         
-        time.sleep(0.1)
+        time.sleep(0.3)
 
 if __name__ == "__main__":
     main()
