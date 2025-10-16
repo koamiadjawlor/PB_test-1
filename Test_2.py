@@ -3,11 +3,11 @@ import time
 import ustruct
 
 # Configuration PWM
-pwm_out = PWM(Pin(16))  # GP16 pour sortie PWM
+pwm_out = PWM(Pin(15))  # GP15 pour sortie PWM
 pwm_out.freq(1000)      # Fréquence 1kHz
 
 # Configuration UART
-uart = UART(0, baudrate=115200, tx=Pin(4), rx=Pin(5))
+uart = UART(1, baudrate=115200, tx=Pin(8), rx=Pin(9))
 
 # Configuration I2C pour ADS1015 (lecture H8)
 i2c = I2C(1, scl=Pin(15), sda=Pin(14), freq=400000)
