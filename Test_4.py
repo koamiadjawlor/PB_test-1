@@ -7,7 +7,7 @@ pwm_out = PWM(Pin(16))
 pwm_out.freq(1000)
 
 # Configuration UART
-uart = UART(0, baudrate=115200, tx=Pin(5), rx=Pin(4))
+uart = UART(1, baudrate=115200, tx=Pin(8), rx=Pin(9))
 
 # Configuration I2C pour ADS1015
 i2c = I2C(1, scl=Pin(15), sda=Pin(14), freq=400000)
@@ -86,7 +86,7 @@ def main():
         if current_time - last_print > 2:
             measured_voltage = read_h8_voltage()
             real_duty = calculate_real_duty(measured_voltage)
-            print(f"Pico2 - Emission: {duty_cycle}%, Tension mesurée: {measured_voltage:.2f}V ({real_duty:.1f}%)")
+            print(f"Pico2 - Emission: {duty_cycle}%, Tension mesure: {measured_voltage:.2f}V ({real_duty:.1f}%)")
             last_print = current_time
         
         # Variation du duty cycle
