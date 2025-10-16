@@ -6,7 +6,7 @@ pwm_out = PWM(Pin(16))
 pwm_out.freq(1000)
 
 # Configuration UART
-uart = UART(0, baudrate=115200, tx=Pin(5), rx=Pin(4))
+uart = UART(1, baudrate=115200, tx=Pin(8), rx=Pin(9))
 
 # Configuration I2C
 i2c = I2C(1, scl=Pin(15), sda=Pin(14), freq=100000)
@@ -45,7 +45,7 @@ def receive_measurement():
         try:
             data = uart.readline()
             if data and data.startswith(b'S'):
-                text = data.decode().strip()
+                text = data.decode().strip() #type:ignore
                 seq = int(text[1:4])
                 
                 if seq <= last_received_sequence:
@@ -99,7 +99,7 @@ def main():
         
         # Affichage périodique de l'émission
         if current_time - last_display_time > 2:
-            print(f"EMIS - Duty:{duty_cycle:3d}% | Tens:{voltage:4.2f}V | Réel:{real_duty:5.1f}%")
+            print(f"EMIS - Duty:{duty_cycle:3d}% | Tens:{voltage:4.2f}V | Reel:{real_duty:5.1f}%")
             last_display_time = current_time
         
         # Variation du duty cycle
