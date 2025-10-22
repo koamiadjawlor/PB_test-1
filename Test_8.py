@@ -29,20 +29,20 @@ def read_ads1015_ain2():
 
 def calculate_real_duty(voltage):
     """Calcule le rapport cyclique réel à partir de la tension"""
-    return max(0, min(100, (voltage / 3.3) * 100))
+    return max(0, min(100, (voltage / 3.3) * 100))# Calcul du duty cycle réel en pourcentage
 
 def send_measurement(theoretical_duty, measured_duty, error):
     """Envoie les mesures à Pico 1"""
-    message = f"ME:{theoretical_duty:.1f}:{measured_duty:.1f}:{error:.1f}\n"
+    message = f"ME:{theoretical_duty:.1f}:{measured_duty:.1f}:{error:.1f}\n"# Formatage du message
     uart.write(message)
 
 def read_uart_theoretical():
     """Lit la valeur théorique envoyée par Pico 1"""
     if uart.any():
         try:
-            data = uart.readline().decode().strip() #type:ignore
-            if data.startswith("TH:"):
-                return float(data[3:])
+            data = uart.readline().decode().strip() #type:ignore # Lecture et décodage de la ligne reçue
+            if data.startswith("TH:"):# Vérifie le format des données reçues
+                return float(data[3:])# Récupère la valeur théorique envoyée
         except:
             pass
     return None
@@ -55,10 +55,10 @@ def set_pwm_duty(duty_cycle):
 
 def main():
     print("=== Pico 2 - Mesure et Validation ===")
-    print("Attente des données de Pico 1...")
+    print("Attente des donnees de Pico 1...")
     
     # Séquence pour le mode bidirectionnel
-    bidir_sequence = [100, 80, 60, 40, 20, 0]
+    bidir_sequence = [100, 80, 60, 40, 20, 0] 
     bidir_index = 0
     last_bidir_change = time.time()
     
@@ -80,7 +80,7 @@ def main():
             send_measurement(theoretical_duty, measured_duty, error)
             
             # 6. Affichage local
-            print(f"ThEorique: {theoretical_duty:5.1f}% | MesurE: {measured_duty:5.1f}% | Erreur: {error:+.1f}% | Tension: {voltage:.2f}V")
+            print(f"Theorique: {theoretical_duty:5.1f}% | Mesure: {measured_duty:5.1f}% | Erreur: {error:+.1f}% | Tension: {voltage:.2f}V")
         
         # Mode bidirectionnel : Pico 2 génère aussi un PWM
         current_time = time.time()
